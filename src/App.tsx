@@ -18,7 +18,6 @@ import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { useMutation, useQuery } from 'convex/react'
-import { Authenticated, Unauthenticated, useConvexAuth } from "convex/react"
 import { api } from '../convex/_generated/api'
 import { Id } from '../convex/_generated/dataModel'
 import { Thermometer, Clock, Trophy, User, Snowflake, Wind } from '@phosphor-icons/react'
@@ -429,9 +428,11 @@ function App() {
 }
 
 function AppWrapper() {
-  const { isLoading, isAuthenticated } = useConvexAuth()
+  // Check if user is authenticated by trying to get their ID
+  const userId = useQuery(api.helpers.getUserId)
 
-  if (isLoading) {
+  // Loading state - userId is undefined while query is running
+  if (userId === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         <div className="text-center">
@@ -442,10 +443,12 @@ function AppWrapper() {
     )
   }
 
-  if (!isAuthenticated) {
+  // Not authenticated - userId is null
+  if (userId === null) {
     return <Auth onAuthChange={() => {}} />
   }
 
+  // Authenticated - show main app
   return <AppContent />
 }
 
