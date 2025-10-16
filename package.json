@@ -10,6 +10,7 @@
         "convex:codegen": "convex codegen",
         "kill": "fuser -k 5000/tcp",
         "build": "tsc -b --noCheck && vite build",
+        "vercel-build": "convex deploy && npm run build",
         "lint": "eslint .",
         "optimize": "vite optimize",
         "preview": "vite preview"
