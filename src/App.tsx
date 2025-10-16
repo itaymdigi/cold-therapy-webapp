@@ -207,7 +207,7 @@ function AppContent() {
         userName={user?.name}
       />
 
-      <div className="relative z-10 w-full max-w-sm mx-auto px-4 pt-6 pb-24"> {/* Added bottom padding for nav */}
+      <div className="relative z-10 w-full max-w-sm mx-auto px-4 sm:px-6 pt-6 pb-24 sm:pb-28"> {/* Responsive padding */}
         {/* Elegant header */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
@@ -228,7 +228,7 @@ function AppContent() {
           
           {/* App title with breathing animation */}
           <motion.h1 
-            className="text-2xl font-bold bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-600 bg-clip-text text-transparent mb-2"
+            className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-600 bg-clip-text text-transparent mb-2"
             animate={{ opacity: [0.8, 1, 0.8] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           >

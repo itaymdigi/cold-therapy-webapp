@@ -116,14 +116,14 @@ export function SessionTypeSelector({ onSelect, selectedType }: SessionTypeSelec
     <div className="space-y-6">
       {/* Beautiful header with subtle animation */}
       <motion.div 
-        className="text-center space-y-3"
+        className="text-center space-y-3 px-2"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent">
+        <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent">
           {t('sessionTypes.title')}
         </h2>
-        <p className="text-muted-foreground/80 text-sm leading-relaxed">
+        <p className="text-muted-foreground/80 text-sm leading-relaxed max-w-md mx-auto">
           {t('sessionTypes.subtitle')}
         </p>
       </motion.div>

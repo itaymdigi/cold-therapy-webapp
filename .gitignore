@@ -1,3 +1,28 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Build outputs
+dist
+dist-ssr
+*-dist
+build
+out
+.next
+.nuxt
+.cache
+.parcel-cache
+.vite
+
+# Testing
+coverage
+.nyc_output
+*.lcov
+.jest-cache
+.vitest
+
 # Logs
 logs
 *.log
@@ -6,16 +31,22 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.log.*
 
-node_modules
-dist
-dist-ssr
-*-dist
-*.local
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 .idea
 .DS_Store
 *.suo
@@ -23,12 +54,90 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*~
 
-.env
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.cache
+*.local
+.temp
+.tmp
+
+# Vercel
+.vercel
+.vercel.json
+
+# PWA
+sw.js
+workbox-*.js
+precache-manifest.*.js
+
+# TypeScript
+*.tsbuildinfo
+.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Lock files (optional - uncomment if you want to ignore them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.turbo
+*.pem
+.contentlayer
+.next
+.cache
+
+# Project specific
 **/agent-eval-report*
 packages
 pids
 .file-manifest
 .devcontainer/
-
 .spark-workbench-id
+
+# Local development
+*.local
+.local
+
+# Sentry
+.sentryclirc
+
+# Storybook
+storybook-static

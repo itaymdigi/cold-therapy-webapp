@@ -207,7 +207,7 @@ export function Timer({ onSessionComplete }: TimerProps) {
             <p className="text-sm font-medium text-muted-foreground text-center mb-3">
               {t('timer.chooseDuration')}
             </p>
-            <div className="flex flex-wrap gap-2 justify-center">
+            <div className="flex flex-wrap gap-2 justify-center max-w-full">
               {presetTimes.map((time, index) => (
                 <motion.div
                   key={time}
