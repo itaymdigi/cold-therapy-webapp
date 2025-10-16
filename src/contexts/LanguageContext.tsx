@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { useKV } from '@/hooks/useLocalStorage'
+import { useMutation, useQuery } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 import { translations } from '@/lib/translations'
 
 type Language = 'en' | 'he'
@@ -14,22 +15,38 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageKV] = useKV<Language>('app-language', 'en')
+  // Get userId from localStorage (set by Auth component)
+  const [userId, setUserId] = useState<string | null>(null)
+  
+  useEffect(() => {
+    const stored = localStorage.getItem('auth-user')
+    if (stored) {
+      try {
+        const user = JSON.parse(stored)
+        setUserId(user.id)
+      } catch {}
+    }
+  }, [])
+  
+  const settings = useQuery(api.settings.getSettings, userId ? { userId } : 'skip')
+  const saveSettings = useMutation(api.settings.saveSettings)
   const [currentLanguage, setCurrentLanguage] = useState<Language>('en')
 
   useEffect(() => {
-    const lang = language || 'en'
+    const lang = settings?.language || 'en'
     setCurrentLanguage(lang)
     // Update document direction for RTL support
     if (typeof document !== 'undefined') {
       document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr'
       document.documentElement.lang = lang
     }
-  }, [language])
+  }, [settings])
 
-  const setLanguage = (lang: Language) => {
-    setLanguageKV(lang)
+  const setLanguage = async (lang: Language) => {
     setCurrentLanguage(lang)
+    if (userId) {
+      await saveSettings({ userId, language: lang })
+    }
   }
 
   const t = (key: string, params?: Record<string, string | number>): string => {

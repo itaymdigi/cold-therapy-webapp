@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { SignIn, SignOut, User, Crown, Globe } from '@phosphor-icons/react'
-import { useKV } from '@/hooks/useLocalStorage'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
@@ -35,27 +34,28 @@ export function UserProfile({ sessions, preferences, onUpdatePreferences }: User
   const { t } = useLanguage()
   const [user, setUser] = useState<UserInfo | null>(null)
   const [loading, setLoading] = useState(true)
-  const [authUser, setAuthUser] = useKV<any>('auth-user', null)
 
   useEffect(() => {
-    // Get user from auth-user KV storage
-    if (authUser) {
-      setUser({
-        avatarUrl: authUser.picture,
-        email: authUser.email,
-        id: authUser.id,
-        isOwner: true,
-        login: authUser.name
-      })
-    } else {
-      setUser(null)
+    // Get user from localStorage
+    const stored = localStorage.getItem('auth-user')
+    if (stored) {
+      try {
+        const authUser = JSON.parse(stored)
+        setUser({
+          avatarUrl: authUser.picture,
+          email: authUser.email,
+          id: authUser.id,
+          isOwner: true,
+          login: authUser.name
+        })
+      } catch {}
     }
     setLoading(false)
-  }, [authUser])
+  }, [])
 
   const handleSignOut = () => {
-    setAuthUser(null)
-    setUser(null)
+    localStorage.removeItem('auth-user')
+    window.location.reload() // Reload to show auth screen
   }
 
   if (loading) {

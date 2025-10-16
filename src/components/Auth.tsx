@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Thermometer, Snowflake } from '@phosphor-icons/react'
-import { useKV } from '@/hooks/useLocalStorage'
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
@@ -20,8 +21,21 @@ interface AuthProps {
 
 export function Auth({ onAuthChange }: AuthProps) {
   const { t, dir } = useLanguage()
-  const [user, setUser] = useKV<User | null>('auth-user', null)
+  const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const createUser = useMutation(api.users.getOrCreateUser)
+
+  useEffect(() => {
+    // Check localStorage for existing user
+    const stored = localStorage.getItem('auth-user')
+    if (stored) {
+      try {
+        const storedUser = JSON.parse(stored)
+        setUser(storedUser)
+        onAuthChange(storedUser)
+      } catch {}
+    }
+  }, [onAuthChange])
 
   useEffect(() => {
     onAuthChange(user || null)
@@ -33,14 +47,25 @@ export function Auth({ onAuthChange }: AuthProps) {
     try {
       // Create a guest user for demo purposes
       // In production, integrate with real OAuth provider (Google, GitHub, etc.)
+      const userId = `user_${Date.now()}`
       const mockGoogleUser: User = {
-        id: `user_${Date.now()}`,
+        id: userId,
         name: 'Guest User',
         email: 'guest@example.com',
         picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`,
         signedInAt: new Date().toISOString()
       }
       
+      // Save to Convex
+      await createUser({
+        userId,
+        name: mockGoogleUser.name,
+        email: mockGoogleUser.email,
+        picture: mockGoogleUser.picture
+      })
+      
+      // Save to localStorage for quick access
+      localStorage.setItem('auth-user', JSON.stringify(mockGoogleUser))
       setUser(mockGoogleUser)
     } catch (error) {
       console.error('Sign in failed:', error)
@@ -50,6 +75,7 @@ export function Auth({ onAuthChange }: AuthProps) {
   }
 
   const handleSignOut = () => {
+    localStorage.removeItem('auth-user')
     setUser(null)
   }
 

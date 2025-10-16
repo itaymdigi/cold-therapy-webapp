@@ -17,7 +17,9 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
-import { useKV } from '@/hooks/useLocalStorage'
+import { useMutation, useQuery } from 'convex/react'
+import { api } from '../convex/_generated/api'
+import { Id } from '../convex/_generated/dataModel'
 import { Thermometer, Clock, Trophy, User, Snowflake, Wind } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import coldTherapyLogo from '@/assets/images/cold-therapy-logo.svg'
@@ -53,20 +55,42 @@ interface UserPreferences {
 
 function AppContent() {
   const { t, dir } = useLanguage()
-  const [sessions, setSessions] = useKV<Session[]>('ice-bath-sessions', [])
-  const [userPreferences, setUserPreferences] = useKV<UserPreferences>('user-preferences', {
+  const [user, setUser] = useState<AuthUser | null>(null)
+  
+  // Convex queries and mutations
+  const userId = user?.id
+  const sessionsData = useQuery(api.sessions.getUserSessions, userId ? { userId } : 'skip')
+  const preferencesData = useQuery(api.preferences.getPreferences, userId ? { userId } : 'skip')
+  const createSessionMutation = useMutation(api.sessions.createSession)
+  const updateSessionMutation = useMutation(api.sessions.updateSession)
+  const deleteSessionMutation = useMutation(api.sessions.deleteSession)
+  const savePreferencesMutation = useMutation(api.preferences.savePreferences)
+  
+  // Convert Convex data to local format
+  const sessions = sessionsData?.map(s => ({
+    id: s._id,
+    duration: s.duration,
+    completedAt: s.completedAt,
+    type: s.type,
+    technique: s.technique,
+    temperature: s.temperature,
+    mood: s.mood,
+    notes: s.notes,
+    intensity: s.intensity
+  })) || []
+  
+  const userPreferences = preferencesData || {
     name: '',
-    experience: 'beginner',
+    experience: 'beginner' as const,
     goals: [],
     preferredDuration: 60,
-    interests: ['cold-therapy'],
+    interests: ['cold-therapy' as const],
     onboardingCompleted: false
-  })
+  }
   const [showCompleteDialog, setShowCompleteDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [completedDuration, setCompletedDuration] = useState(0)
   const [editingSession, setEditingSession] = useState<Session | null>(null)
-  const [user, setUser] = useState<AuthUser | null>(null)
   const [activeTab, setActiveTab] = useState('timer')
   const [selectedSessionType, setSelectedSessionType] = useState<SessionType | null>(null)
 
@@ -74,77 +98,72 @@ function AppContent() {
     setUser(authUser)
   }
 
-  const handleSessionComplete = (
+  const handleSessionComplete = async (
     duration: number, 
     type: SessionType = 'ice-bath', 
     technique?: string,
     temperature?: number,
     intensity?: 'low' | 'medium' | 'high'
   ) => {
+    if (!userId) return
+    
     setCompletedDuration(duration)
-    if (type === 'breathing') {
-      // For breathing sessions, save immediately with technique info
-      const newSession: Session = {
-        id: Date.now().toString(),
-        duration,
-        completedAt: new Date().toISOString(),
-        type: 'breathing',
-        technique,
-        notes: undefined,
-        mood: undefined
-      }
-
-      setSessions(currentSessions => [...(currentSessions || []), newSession])
-      
-      toast.success(t('breathing.notifications.sessionComplete'), {
-        description: `${technique || 'Unknown'} - ${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`
-      })
-    } else {
-      // For thermal sessions, save immediately with session details
-      const newSession: Session = {
-        id: Date.now().toString(),
+    
+    try {
+      await createSessionMutation({
+        userId,
         duration,
         completedAt: new Date().toISOString(),
         type,
+        technique,
         temperature,
         intensity,
-        notes: undefined,
-        mood: undefined
-      }
-
-      setSessions(currentSessions => [...(currentSessions || []), newSession])
-      
-      const sessionName = t(`sessionTypes.${type}.name`) || type || 'Session'
-      const durationStr = `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`
-      const tempStr = temperature ? ` at ${temperature}°C` : ''
-      
-      toast.success(t('notifications.sessionComplete'), {
-        description: `${sessionName} - ${durationStr}${tempStr}`
       })
       
-      // Reset session type selection
-      setSelectedSessionType(null)
+      if (type === 'breathing') {
+        toast.success(t('breathing.notifications.sessionComplete'), {
+          description: `${technique || 'Unknown'} - ${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`
+        })
+      } else {
+        const sessionName = t(`sessionTypes.${type}.name`) || type || 'Session'
+        const durationStr = `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`
+        const tempStr = temperature ? ` at ${temperature}°C` : ''
+        
+        toast.success(t('notifications.sessionComplete'), {
+          description: `${sessionName} - ${durationStr}${tempStr}`
+        })
+        
+        setSelectedSessionType(null)
+      }
+    } catch (error) {
+      console.error('Failed to save session:', error)
+      toast.error('Failed to save session')
     }
   }
 
-  const handleSaveSession = (notes: string, mood: string) => {
-    const newSession: Session = {
-      id: Date.now().toString(),
-      duration: completedDuration,
-      completedAt: new Date().toISOString(),
-      type: 'ice-bath',
-      notes: notes || undefined,
-      mood: mood || undefined
-    }
-
-    setSessions(currentSessions => [...(currentSessions || []), newSession])
+  const handleSaveSession = async (notes: string, mood: string) => {
+    if (!userId) return
     
-    toast.success(t('notifications.sessionSaved'), {
-      description: t('notifications.sessionSavedDesc', { 
-        minutes: Math.floor(completedDuration / 60).toString(),
-        seconds: (completedDuration % 60).toString()
+    try {
+      await createSessionMutation({
+        userId,
+        duration: completedDuration,
+        completedAt: new Date().toISOString(),
+        type: 'ice-bath',
+        notes: notes || undefined,
+        mood: mood || undefined
       })
-    })
+      
+      toast.success(t('notifications.sessionSaved'), {
+        description: t('notifications.sessionSavedDesc', { 
+          minutes: Math.floor(completedDuration / 60).toString(),
+          seconds: (completedDuration % 60).toString()
+        })
+      })
+    } catch (error) {
+      console.error('Failed to save session:', error)
+      toast.error('Failed to save session')
+    }
   }
 
   const handleEditSession = (session: Session) => {
@@ -152,33 +171,56 @@ function AppContent() {
     setShowEditDialog(true)
   }
 
-  const handleUpdateSession = (updatedSession: Session) => {
-    setSessions(currentSessions => 
-      (currentSessions || []).map(session => 
-        session.id === updatedSession.id ? updatedSession : session
-      )
-    )
-    
-    toast.success(t('notifications.sessionUpdated'), {
-      description: t('notifications.sessionUpdatedDesc')
-    })
+  const handleUpdateSession = async (updatedSession: Session) => {
+    try {
+      await updateSessionMutation({
+        id: updatedSession.id as Id<'sessions'>,
+        duration: updatedSession.duration,
+        mood: updatedSession.mood,
+        notes: updatedSession.notes,
+        temperature: updatedSession.temperature,
+        intensity: updatedSession.intensity
+      })
+      
+      toast.success(t('notifications.sessionUpdated'), {
+        description: t('notifications.sessionUpdatedDesc')
+      })
+    } catch (error) {
+      console.error('Failed to update session:', error)
+      toast.error('Failed to update session')
+    }
   }
 
-  const handleDeleteSession = (sessionId: string) => {
-    setSessions(currentSessions => 
-      (currentSessions || []).filter(session => session.id !== sessionId)
-    )
-    
-    toast.success(t('notifications.sessionDeleted'), {
-      description: t('notifications.sessionDeletedDesc')
-    })
+  const handleDeleteSession = async (sessionId: string) => {
+    try {
+      await deleteSessionMutation({ id: sessionId as Id<'sessions'> })
+      
+      toast.success(t('notifications.sessionDeleted'), {
+        description: t('notifications.sessionDeletedDesc')
+      })
+    } catch (error) {
+      console.error('Failed to delete session:', error)
+      toast.error('Failed to delete session')
+    }
   }
 
-  const handleOnboardingComplete = (preferences: Omit<UserPreferences, 'onboardingCompleted'>) => {
-    setUserPreferences({ ...preferences, onboardingCompleted: true })
-    toast.success(t('onboarding.complete.title', { name: preferences.name }), {
-      description: t('onboarding.complete.subtitle')
-    })
+  const handleOnboardingComplete = async (preferences: Omit<UserPreferences, 'onboardingCompleted'>) => {
+    if (!userId) return
+    
+    try {
+      await savePreferencesMutation({
+        userId,
+        ...preferences,
+        onboardingCompleted: true
+      })
+      
+      toast.success(t('onboarding.complete.title', { name: preferences.name }), {
+        description: t('onboarding.complete.subtitle')
+      })
+    } catch (error) {
+      console.error('Failed to save preferences:', error)
+      toast.error('Failed to save preferences')
+    }
   }
 
   // Show auth screen if user is not signed in
@@ -337,7 +379,10 @@ function AppContent() {
                 <UserProfile 
                   sessions={sessions || []} 
                   preferences={userPreferences}
-                  onUpdatePreferences={setUserPreferences}
+                  onUpdatePreferences={async (prefs) => {
+                    if (!userId) return
+                    await savePreferencesMutation({ userId, ...prefs })
+                  }}
                 />
               </div>
             )}
