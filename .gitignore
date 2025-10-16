@@ -145,3 +145,5 @@ pids
 
 # Storybook
 storybook-static
+
+.vercel
