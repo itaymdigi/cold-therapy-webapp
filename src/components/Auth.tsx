@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Thermometer, Snowflake } from '@phosphor-icons/react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/hooks/useLocalStorage'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
@@ -31,18 +31,13 @@ export function Auth({ onAuthChange }: AuthProps) {
     setIsLoading(true)
     
     try {
-      // Simulate Google OAuth flow with current GitHub user
-      const currentUser = await window.spark.user()
-      
-      if (!currentUser) {
-        throw new Error('No user found')
-      }
-      
+      // Create a guest user for demo purposes
+      // In production, integrate with real OAuth provider (Google, GitHub, etc.)
       const mockGoogleUser: User = {
-        id: currentUser.id.toString(),
-        name: currentUser.login,
-        email: currentUser.email || `${currentUser.login}@github.com`,
-        picture: currentUser.avatarUrl,
+        id: `user_${Date.now()}`,
+        name: 'Guest User',
+        email: 'guest@example.com',
+        picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`,
         signedInAt: new Date().toISOString()
       }
       

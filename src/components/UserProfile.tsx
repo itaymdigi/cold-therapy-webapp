@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { SignIn, SignOut, User, Crown, Globe } from '@phosphor-icons/react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/hooks/useLocalStorage'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
@@ -38,20 +38,20 @@ export function UserProfile({ sessions, preferences, onUpdatePreferences }: User
   const [authUser, setAuthUser] = useKV<any>('auth-user', null)
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userInfo = await window.spark.user()
-        setUser(userInfo)
-      } catch (error) {
-        console.log('Not signed in')
-        setUser(null)
-      } finally {
-        setLoading(false)
-      }
+    // Get user from auth-user KV storage
+    if (authUser) {
+      setUser({
+        avatarUrl: authUser.picture,
+        email: authUser.email,
+        id: authUser.id,
+        isOwner: true,
+        login: authUser.name
+      })
+    } else {
+      setUser(null)
     }
-
-    fetchUser()
-  }, [])
+    setLoading(false)
+  }, [authUser])
 
   const handleSignOut = () => {
     setAuthUser(null)

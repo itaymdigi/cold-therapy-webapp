@@ -18,7 +18,7 @@ import {
   Heart,
   Thermometer
 } from '@phosphor-icons/react'
-import { useKV } from '@github/spark/hooks'
+// Removed Spark dependency - using local state only
 import coldTherapyLogo from '@/assets/images/cold-therapy-logo.svg'
 
 interface OnboardingProps {
