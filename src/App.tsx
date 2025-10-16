@@ -18,7 +18,7 @@ import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { useMutation, useQuery } from 'convex/react'
-import { Authenticated, Unauthenticated } from "convex/react"
+import { Authenticated, Unauthenticated, useConvexAuth } from "convex/react"
 import { api } from '../convex/_generated/api'
 import { Id } from '../convex/_generated/dataModel'
 import { Thermometer, Clock, Trophy, User, Snowflake, Wind } from '@phosphor-icons/react'
@@ -405,14 +405,30 @@ function AppContent() {
 function App() {
   return (
     <LanguageProvider>
-      <Unauthenticated>
-        <Auth onAuthChange={() => {}} />
-      </Unauthenticated>
-      <Authenticated>
-        <AppContent />
-      </Authenticated>
+      <AppWrapper />
     </LanguageProvider>
   )
+}
+
+function AppWrapper() {
+  const { isLoading, isAuthenticated } = useConvexAuth()
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Auth onAuthChange={() => {}} />
+  }
+
+  return <AppContent />
 }
 
 export default App
