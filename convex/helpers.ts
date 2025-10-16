@@ -6,6 +6,7 @@ export const getUserId = query({
   args: {},
   handler: async (ctx) => {
     const userId = await auth.getUserId(ctx);
+    console.log("getUserId called, result:", userId);
     return userId;
   },
 });
