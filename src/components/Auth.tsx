@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Thermometer, Snowflake } from '@phosphor-icons/react'
-import { useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { useAuthActions } from "@convex-dev/auth/react"
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
@@ -21,88 +20,18 @@ interface AuthProps {
 
 export function Auth({ onAuthChange }: AuthProps) {
   const { t, dir } = useLanguage()
-  const [user, setUser] = useState<User | null>(null)
+  const { signIn } = useAuthActions()
   const [isLoading, setIsLoading] = useState(false)
-  const createUser = useMutation(api.users.getOrCreateUser)
-
-  useEffect(() => {
-    // Check localStorage for existing user
-    const stored = localStorage.getItem('auth-user')
-    if (stored) {
-      try {
-        const storedUser = JSON.parse(stored)
-        setUser(storedUser)
-        onAuthChange(storedUser)
-      } catch {}
-    }
-  }, [onAuthChange])
-
-  useEffect(() => {
-    onAuthChange(user || null)
-  }, [user, onAuthChange])
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
-    
     try {
-      // Create a guest user for demo purposes
-      // In production, integrate with real OAuth provider (Google, GitHub, etc.)
-      const userId = `user_${Date.now()}`
-      const mockGoogleUser: User = {
-        id: userId,
-        name: 'Guest User',
-        email: 'guest@example.com',
-        picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`,
-        signedInAt: new Date().toISOString()
-      }
-      
-      // Save to Convex
-      await createUser({
-        userId,
-        name: mockGoogleUser.name,
-        email: mockGoogleUser.email,
-        picture: mockGoogleUser.picture
-      })
-      
-      // Save to localStorage for quick access
-      localStorage.setItem('auth-user', JSON.stringify(mockGoogleUser))
-      setUser(mockGoogleUser)
+      await signIn("google")
     } catch (error) {
       console.error('Sign in failed:', error)
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const handleSignOut = () => {
-    localStorage.removeItem('auth-user')
-    setUser(null)
-  }
-
-  if (user) {
-    return (
-      <div className="flex items-center justify-between p-4 bg-card rounded-xl border shadow-sm">
-        <div className="flex items-center gap-3">
-          <img
-            src={user.picture}
-            alt={user.name}
-            className="w-10 h-10 rounded-full ring-2 ring-primary/20"
-          />
-          <div>
-            <p className="font-medium text-sm">{user.name}</p>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSignOut}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          Sign Out
-        </Button>
-      </div>
-    )
   }
 
   return (

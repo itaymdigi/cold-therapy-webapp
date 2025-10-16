@@ -18,6 +18,7 @@ import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { useMutation, useQuery } from 'convex/react'
+import { Authenticated, Unauthenticated } from "convex/react"
 import { api } from '../convex/_generated/api'
 import { Id } from '../convex/_generated/dataModel'
 import { Thermometer, Clock, Trophy, User, Snowflake, Wind } from '@phosphor-icons/react'
@@ -55,10 +56,9 @@ interface UserPreferences {
 
 function AppContent() {
   const { t, dir } = useLanguage()
-  const [user, setUser] = useState<AuthUser | null>(null)
   
-  // Convex queries and mutations
-  const userId = user?.id
+  // Get current authenticated user ID from Convex Auth
+  const userId = useQuery(api.helpers.getUserId)
   const sessionsData = useQuery(api.sessions.getUserSessions, userId ? { userId } : 'skip')
   const preferencesData = useQuery(api.preferences.getPreferences, userId ? { userId } : 'skip')
   const createSessionMutation = useMutation(api.sessions.createSession)
@@ -93,10 +93,6 @@ function AppContent() {
   const [editingSession, setEditingSession] = useState<Session | null>(null)
   const [activeTab, setActiveTab] = useState('timer')
   const [selectedSessionType, setSelectedSessionType] = useState<SessionType | null>(null)
-
-  const handleAuthChange = (authUser: AuthUser | null) => {
-    setUser(authUser)
-  }
 
   const handleSessionComplete = async (
     duration: number, 
@@ -223,13 +219,8 @@ function AppContent() {
     }
   }
 
-  // Show auth screen if user is not signed in
-  if (!user) {
-    return <Auth onAuthChange={handleAuthChange} />
-  }
-
   // Show onboarding if not completed
-  if (!userPreferences?.onboardingCompleted) {
+  if (userId && !userPreferences?.onboardingCompleted) {
     return <Onboarding onComplete={handleOnboardingComplete} />
   }
 
@@ -245,8 +236,8 @@ function AppContent() {
       <Navigation 
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        userPicture={user?.picture}
-        userName={user?.name}
+        userPicture={undefined}
+        userName={userPreferences?.name}
       />
 
       <div className="relative z-10 w-full max-w-sm mx-auto px-4 sm:px-6 pt-6 pb-24 sm:pb-28"> {/* Responsive padding */}
@@ -286,23 +277,21 @@ function AppContent() {
           </div>
           
           {/* Beautiful user profile card */}
-          {user && userPreferences && (
+          {userPreferences && (
             <motion.div 
               className="inline-flex items-center gap-3 px-4 py-3 bg-white/80 backdrop-blur-lg rounded-2xl border border-white/50 shadow-lg shadow-blue-500/10"
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
               <div className="relative">
-                <img
-                  src={user.picture}
-                  alt={user.name}
-                  className="w-10 h-10 rounded-xl object-cover ring-2 ring-white shadow-md"
-                />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg ring-2 ring-white shadow-md">
+                  {userPreferences.name.charAt(0).toUpperCase()}
+                </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
               </div>
               <div className="text-left">
                 <p className="font-semibold text-foreground text-sm leading-tight">
-                  {userPreferences.name || user.name}
+                  {userPreferences.name}
                 </p>
                 <p className="text-xs text-muted-foreground capitalize">
                   {t(`onboarding.experience.${userPreferences.experience}.title`)}
@@ -416,7 +405,12 @@ function AppContent() {
 function App() {
   return (
     <LanguageProvider>
-      <AppContent />
+      <Unauthenticated>
+        <Auth onAuthChange={() => {}} />
+      </Unauthenticated>
+      <Authenticated>
+        <AppContent />
+      </Authenticated>
     </LanguageProvider>
   )
 }
