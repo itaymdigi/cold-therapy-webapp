@@ -4,17 +4,7 @@ import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
   ...authTables,
-  // User authentication and profile
-  users: defineTable({
-    userId: v.string(),
-    name: v.string(),
-    email: v.string(),
-    picture: v.string(),
-    signedInAt: v.string(),
-  })
-    .index("by_user_id", ["userId"])
-    .index("email", ["email"]),
-
+  
   // User preferences from onboarding
   userPreferences: defineTable({
     userId: v.string(),
