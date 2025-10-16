@@ -59,6 +59,19 @@ function AppContent() {
   
   // Get current authenticated user ID from Convex Auth
   const userId = useQuery(api.helpers.getUserId)
+  
+  // Show loading while checking user ID
+  if (userId === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your data...</p>
+        </div>
+      </div>
+    )
+  }
+  
   const sessionsData = useQuery(api.sessions.getUserSessions, userId ? { userId } : 'skip')
   const preferencesData = useQuery(api.preferences.getPreferences, userId ? { userId } : 'skip')
   const createSessionMutation = useMutation(api.sessions.createSession)
@@ -219,6 +232,11 @@ function AppContent() {
     }
   }
 
+  // Debug logging
+  console.log('AppContent - userId:', userId)
+  console.log('AppContent - userPreferences:', userPreferences)
+  console.log('AppContent - onboardingCompleted:', userPreferences?.onboardingCompleted)
+  
   // Show onboarding if not completed
   if (userId && !userPreferences?.onboardingCompleted) {
     return <Onboarding onComplete={handleOnboardingComplete} />
