@@ -431,8 +431,11 @@ function AppWrapper() {
   // Check if user is authenticated by trying to get their ID
   const userId = useQuery(api.helpers.getUserId)
 
+  console.log("AppWrapper - userId:", userId);
+
   // Loading state - userId is undefined while query is running
   if (userId === undefined) {
+    console.log("AppWrapper - Loading state");
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         <div className="text-center">
@@ -445,10 +448,12 @@ function AppWrapper() {
 
   // Not authenticated - userId is null
   if (userId === null) {
+    console.log("AppWrapper - Not authenticated, showing auth screen");
     return <Auth onAuthChange={() => {}} />
   }
 
   // Authenticated - show main app
+  console.log("AppWrapper - Authenticated! Showing app content");
   return <AppContent />
 }
 
