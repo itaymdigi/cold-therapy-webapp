@@ -11,7 +11,9 @@ export default defineSchema({
     email: v.string(),
     picture: v.string(),
     signedInAt: v.string(),
-  }).index("by_user_id", ["userId"]),
+  })
+    .index("by_user_id", ["userId"])
+    .index("email", ["email"]),
 
   // User preferences from onboarding
   userPreferences: defineTable({
