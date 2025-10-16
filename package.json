@@ -4,7 +4,9 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "vite",
+        "dev": "npm run convex:dev & vite",
+        "convex:dev": "convex dev",
+        "convex:deploy": "convex deploy",
         "kill": "fuser -k 5000/tcp",
         "build": "tsc -b --noCheck && vite build",
         "lint": "eslint .",
@@ -49,6 +51,7 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "cmdk": "^1.1.1",
+        "convex": "^1.28.0",
         "d3": "^7.9.0",
         "date-fns": "^3.6.0",
         "embla-carousel-react": "^8.5.2",

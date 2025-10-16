@@ -41,6 +41,10 @@ lerna-debug.log*
 .env.production.local
 .env*.local
 
+# Convex
+.convex/
+convex/_generated/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
